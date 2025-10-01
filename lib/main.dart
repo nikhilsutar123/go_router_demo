@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,17 +13,24 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final GoRouter router = GoRouter(
-        redirect: (context, state){
-          final uri = state.uri;
-          if(uri.scheme.isNotEmpty || uri.authority.isNotEmpty){
-            String routePath = "/${uri.authority}${uri.path}";
-            print("path ${routePath}");
-            return routePath;
-          }
-          return null;
-        },
-      routes: [
+      initialLocation: "/",
+      redirect: (context, state) {
+        final uri = state.uri;
+        if (uri.scheme.isNotEmpty || uri.authority.isNotEmpty) {
+          String routePath = "/${uri.authority}${uri.path}";
+          print("path $routePath");
+          return routePath;
+        }
+        return null;
+      },
+      routes: <RouteBase>[
         GoRoute(path: "/", builder: (context, state) => const HomePage()),
+        GoRoute(
+          path: "/details/:id",
+          builder: (context, state) {
+            return DetailPage(userId: state.pathParameters["id"]!);
+          },
+        ),
         GoRoute(
           path: "/profile/:id",
           builder: (context, state) {
@@ -45,9 +54,9 @@ class HomePage extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            context.go('/profile/42');
+            context.push('/details/42');
           },
-          child: const Text("Go to Profile page"),
+          child: const Text("Go to Details page"),
         ),
       ),
     );
@@ -62,8 +71,55 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(
+        title: const Text('Profile'),
+        leading: Platform.isIOS
+            ? IconButton(
+                onPressed: () {
+                  context.pop();
+                },
+                icon: Icon(Icons.arrow_back_ios),
+              )
+            : null,
+      ),
       body: Center(child: Text('Profile Page for user $userId')),
+    );
+  }
+}
+
+class DetailPage extends StatelessWidget {
+  final String userId;
+
+  const DetailPage({super.key, required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Details'),
+        leading: Platform.isIOS
+            ? IconButton(
+                onPressed: () {
+                  context.pop();
+                },
+                icon: Icon(Icons.arrow_back_ios),
+              )
+            : null,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Detail Page for user $userId'),
+            ElevatedButton(
+              onPressed: () {
+                context.push('/profile/42');
+              },
+              child: const Text("Go to Profile page"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
